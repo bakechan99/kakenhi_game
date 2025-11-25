@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/setup_screen.dart'; // 設定画面を呼び出す
+import 'screens/title_screen.dart'; // 設定画面を呼び出す
 
 void main() {
   runApp(const KakenhiGameApp());
@@ -17,7 +17,7 @@ class KakenhiGameApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),
-      home: const SetupScreen(), // ここで最初の画面を指定
+      home: const TitleScreen(), // ここで最初の画面を指定
     );
   }
 }
