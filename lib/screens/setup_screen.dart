@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 保存用
 import '../models/card_data.dart';
 import '../models/player.dart';
+import '../models/game_settings.dart'; // 新規作成した設定モデル
 import 'game_loop_screen.dart';
 
 class SetupScreen extends StatefulWidget {
@@ -15,190 +17,151 @@ class SetupScreen extends StatefulWidget {
 
 class _SetupScreenState extends State<SetupScreen> {
   int playerCount = 3;
-  // コントローラーをリストで管理（並び替え時にこれを操作します）
+  int presentationTime = 30; // デフォルト30秒
   final List<TextEditingController> _controllers = [];
 
   @override
   void initState() {
     super.initState();
-    // 初期化：3人分作成
-    _updateControllers();
+    _loadPlayerNames(); // 保存された名前を読み込む
   }
 
-  // 人数に合わせてコントローラーを増減させる関数
+  // --- 保存機能 ---
+  Future<void> _loadPlayerNames() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedNames = prefs.getStringList('playerNames');
+    
+    setState(() {
+      if (savedNames != null && savedNames.isNotEmpty) {
+        playerCount = max(3, min(8, savedNames.length));
+        _controllers.clear();
+        for (String name in savedNames) {
+          _controllers.add(TextEditingController(text: name));
+        }
+      } else {
+        _updateControllers(); // 保存がない場合はデフォルト
+      }
+    });
+  }
+
+  Future<void> _savePlayerNames() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> names = _controllers.map((c) => c.text).toList();
+    await prefs.setStringList('playerNames', names);
+  }
+
   void _updateControllers() {
     setState(() {
-      // 足りない分を追加
       while (_controllers.length < playerCount) {
-        // 名前が空欄だと寂しいので初期値を入れておきます
         _controllers.add(TextEditingController(text: "プレイヤー${_controllers.length + 1}"));
       }
-      // 多い分を削除（後ろから）
       while (_controllers.length > playerCount) {
         _controllers.removeLast();
       }
     });
   }
 
-  // ＋ボタンの処理（最大8人）
-  void _incrementPlayers() {
-    if (playerCount < 8) {
-      setState(() {
-        playerCount++;
-        _updateControllers();
-      });
-    }
-  }
-
-  // －ボタンの処理（最小3人）
-  void _decrementPlayers() {
-    if (playerCount > 3) {
-      setState(() {
-        playerCount--;
-        _updateControllers();
-      });
-    }
-  }
-
-  // リストを並び替えた時の処理（ドラッグ＆ドロップで呼ばれる）
-  void _onReorder(int oldIndex, int newIndex) {
+  // --- 時間設定の増減 ---
+  void _changeTime(int amount) {
     setState(() {
-      // 並び替えの作法（移動先が後ろの場合の補正）
-      if (oldIndex < newIndex) {
-        newIndex -= 1;
-      }
-      // リストから抜いて、新しい場所に挿入
-      final item = _controllers.removeAt(oldIndex);
-      _controllers.insert(newIndex, item);
+      presentationTime += amount;
+      if (presentationTime < 10) presentationTime = 10; // 最小10秒
+      if (presentationTime > 300) presentationTime = 300; // 最大5分
     });
   }
 
+  // --- ゲーム開始 ---
   Future<void> _startGame() async {
-    // データ読み込み
+    // 名前を保存
+    await _savePlayerNames();
+
     final String response = await rootBundle.loadString('assets/cards.json');
     final List<dynamic> data = json.decode(response);
     List<CardData> deck = data.map((json) => CardData.fromJson(json)).toList();
-
     deck.shuffle(Random());
 
     List<Player> players = [];
     for (int i = 0; i < playerCount; i++) {
-      // _controllersの順番通りにプレイヤーを作成
       Player p = Player(name: _controllers[i].text);
       for (int j = 0; j < 6; j++) {
-        if (deck.isNotEmpty) {
-          p.hand.add(deck.removeLast());
-        }
+        if (deck.isNotEmpty) p.hand.add(deck.removeLast());
       }
       players.add(p);
     }
 
     if (!mounted) return;
+    
+    // 設定をまとめて次の画面へ渡す
+    GameSettings settings = GameSettings(presentationTimeSec: presentationTime);
+
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => GameLoopScreen(players: players)),
+      MaterialPageRoute(builder: (context) => GameLoopScreen(players: players, settings: settings)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("プレイヤー設定")),
-      body: Padding(
+      appBar: AppBar(title: const Text("ゲーム設定")),
+      body: SingleChildScrollView( // 画面からはみ出ないようにスクロール可能に
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // --- 1. 人数変更エリア (+ - ボタン) ---
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("参加人数: ", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 20),
-                  // マイナスボタン
-                  IconButton.filled(
-                    onPressed: playerCount > 3 ? _decrementPlayers : null, // 3人なら押せない
-                    icon: const Icon(Icons.remove),
-                    style: IconButton.styleFrom(backgroundColor: Colors.redAccent),
-                  ),
-                  const SizedBox(width: 20),
-                  // 人数表示
-                  Text(
-                    "$playerCount人",
-                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 20),
-                  // プラスボタン
-                  IconButton.filled(
-                    onPressed: playerCount < 8 ? _incrementPlayers : null, // 8人なら押せない
-                    icon: const Icon(Icons.add),
-                    style: IconButton.styleFrom(backgroundColor: Colors.green),
-                  ),
-                ],
-              ),
+            _buildSectionTitle("① 参加人数"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton.filled(onPressed: playerCount > 3 ? () { setState(() { playerCount--; _updateControllers(); }); } : null, icon: const Icon(Icons.remove)),
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Text("$playerCount人", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+                IconButton.filled(onPressed: playerCount < 8 ? () { setState(() { playerCount++; _updateControllers(); }); } : null, icon: const Icon(Icons.add)),
+              ],
             ),
+            const SizedBox(height: 20),
             
-            const SizedBox(height: 10),
-            const Text("左のハンドル（≡）を長押しで順番を入れ替えられます", 
-              style: TextStyle(color: Colors.grey, fontSize: 12)),
-            const SizedBox(height: 10),
+            _buildSectionTitle("② プレゼン時間"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton.outlined(onPressed: () => _changeTime(-10), icon: const Text("-10秒")),
+                const SizedBox(width: 10),
+                Text("${presentationTime}秒", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 10),
+                IconButton.outlined(onPressed: () => _changeTime(10), icon: const Text("+10秒")),
+              ],
+            ),
+            const SizedBox(height: 20),
 
-            // --- 2. 名前入力リスト（並び替え可能） ---
-            Expanded(
+            _buildSectionTitle("③ プレイヤー名（ドラッグで入替）"),
+            SizedBox(
+              height: 200, // リストの高さ制限
               child: ReorderableListView(
-                onReorder: _onReorder,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (oldIndex < newIndex) newIndex -= 1;
+                    final item = _controllers.removeAt(oldIndex);
+                    _controllers.insert(newIndex, item);
+                  });
+                },
                 children: [
-                  // コントローラーの数だけリストを作る
                   for (int i = 0; i < _controllers.length; i++)
-                    Card(
-                      // ReorderableListViewにはKeyが必須。コントローラー自体をKeyにする
-                      key: ValueKey(_controllers[i]), 
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        // 左端のハンドルアイコン（ここを持ってドラッグ）
-                        leading: ReorderableDragStartListener(
-                          index: i,
-                          child: const Icon(Icons.drag_handle, size: 30, color: Colors.grey),
-                        ),
-                        title: TextField(
-                          controller: _controllers[i],
-                          decoration: InputDecoration(
-                            labelText: "${i + 1}番目のプレイヤー名", // 順番が変わっても「1番目」等の表示は正しい位置に出る
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
+                    ListTile(
+                      key: ValueKey(_controllers[i]),
+                      leading: const Icon(Icons.drag_handle),
+                      title: TextField(controller: _controllers[i]),
                     ),
                 ],
               ),
             ),
-
-            // --- 3. ゲーム開始ボタン ---
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                onPressed: _startGame,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  elevation: 5,
-                ),
-                child: const Text("ゲームを開始", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              ),
-            ),
-            const SizedBox(height: 20),
+            SizedBox(width: double.infinity, height: 60, child: ElevatedButton(onPressed: _startGame, child: const Text("ゲーム開始", style: TextStyle(fontSize: 20)))),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Align(alignment: Alignment.centerLeft, child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey)));
   }
 }
