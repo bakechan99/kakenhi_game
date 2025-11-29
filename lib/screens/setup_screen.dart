@@ -7,6 +7,7 @@ import '../models/card_data.dart';
 import '../models/player.dart';
 import '../models/game_settings.dart'; // 新規作成した設定モデル
 import 'game_loop_screen.dart';
+import '../constants/texts.dart'; // 追加
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
@@ -17,7 +18,7 @@ class SetupScreen extends StatefulWidget {
 
 class _SetupScreenState extends State<SetupScreen> {
   int playerCount = 3;
-  int presentationTime = 30; // デフォルト30秒
+  int presentationTimeSec = 30;
   final List<TextEditingController> _controllers = [];
 
   @override
@@ -64,9 +65,9 @@ class _SetupScreenState extends State<SetupScreen> {
   // --- 時間設定の増減 ---
   void _changeTime(int amount) {
     setState(() {
-      presentationTime += amount;
-      if (presentationTime < 10) presentationTime = 10; // 最小10秒
-      if (presentationTime > 300) presentationTime = 300; // 最大5分
+      presentationTimeSec += amount;
+      if (presentationTimeSec < 10) presentationTimeSec = 10; // 最小10秒
+      if (presentationTimeSec > 300) presentationTimeSec = 300; // 最大5分
     });
   }
 
@@ -92,7 +93,7 @@ class _SetupScreenState extends State<SetupScreen> {
     if (!mounted) return;
     
     // 設定をまとめて次の画面へ渡す
-    GameSettings settings = GameSettings(presentationTimeSec: presentationTime);
+    GameSettings settings = GameSettings(presentationTimeSec: presentationTimeSec);
 
     Navigator.push(
       context,
@@ -103,31 +104,52 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("ゲーム設定")),
+      appBar: AppBar(
+        title: const Text(AppTexts.setupTitle),
+      ),
       body: SingleChildScrollView( // 画面からはみ出ないようにスクロール可能に
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildSectionTitle("① 参加人数"),
+            // プレイヤー人数設定
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton.filled(onPressed: playerCount > 3 ? () { setState(() { playerCount--; _updateControllers(); }); } : null, icon: const Icon(Icons.remove)),
-                Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Text("$playerCount人", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-                IconButton.filled(onPressed: playerCount < 8 ? () { setState(() { playerCount++; _updateControllers(); }); } : null, icon: const Icon(Icons.add)),
+                const Text(AppTexts.playerCountLabel, style: TextStyle(fontSize: 18)),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: playerCount > 2 ? () => setState(() => playerCount--) : null,
+                    ),
+                    Text("$playerCount", style: const TextStyle(fontSize: 24)),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: playerCount < 6 ? () => setState(() => playerCount++) : null,
+                    ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 20),
-            
-            _buildSectionTitle("② プレゼン時間"),
+            // プレゼン時間設定
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton.outlined(onPressed: () => _changeTime(-10), icon: const Text("-10秒")),
-                const SizedBox(width: 10),
-                Text("${presentationTime}秒", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 10),
-                IconButton.outlined(onPressed: () => _changeTime(10), icon: const Text("+10秒")),
+                const Text(AppTexts.presentationTimeLabel, style: TextStyle(fontSize: 18)),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: presentationTimeSec > 10 ? () => setState(() => presentationTimeSec -= 5) : null,
+                    ),
+                    Text("$presentationTimeSec", style: const TextStyle(fontSize: 24)),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: presentationTimeSec < 120 ? () => setState(() => presentationTimeSec += 5) : null,
+                    ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 20),

@@ -4,6 +4,7 @@ import '../models/player.dart';
 import '../models/placed_card.dart';
 import '../models/game_settings.dart'; // 設定モデル
 import 'result_screen.dart';
+import '../constants/texts.dart'; // 追加
 
 class GameLoopScreen extends StatefulWidget {
   final List<Player> players;
@@ -65,6 +66,68 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
               child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmAndProceed() async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(AppTexts.confirmTitle),
+          content: Text(
+            "${AppTexts.nextPlayer}${_players[_currentPlayerIndex].name}${AppTexts.san}",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(AppTexts.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _goToNextPlayer();
+              },
+              child: const Text(AppTexts.ok),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _saveResearchTitle() async {
+    final selected = _players[_currentPlayerIndex].selectedCards;
+    if (selected.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppTexts.handEmpty)),
+      );
+      return;
+    }
+
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(AppTexts.confirmTitle),
+          content: const Text(AppTexts.confirmResearchTitle),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(AppTexts.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() {
+                  _players[_currentPlayerIndex].isReady = true;
+                });
+              },
+              child: const Text(AppTexts.ok),
             ),
           ],
         );
@@ -331,8 +394,239 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Player player = widget.players[currentPlayerIndex];
-    if (isPassing) return _buildPassingScreen(player);
-    return _buildGameScreen(player);
+    final currentPlayer = _players[_currentPlayerIndex];
+    final allReady = _players.every((p) => p.isReady);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("${currentPlayer.name}${AppTexts.san}"),
+      ),
+      body: allReady
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    AppTexts.allPlayersReady,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 40),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ResultScreen(
+                            players: _players,
+                            settings: widget.settings,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text(AppTexts.proceedToPresentation),
+                  ),
+                ],
+              ),
+            )
+          : Column(
+              children: [
+                // --- エリアA: 作成されたタイトル（ドラッグ並び替えエリア） ---
+                Container(
+                  height: 220,
+                  width: double.infinity,
+                  color: Colors.blue[50],
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       const Padding(
+                         padding: EdgeInsets.only(left: 10, bottom: 5),
+                         child: Text("【研究課題名】 ドラッグで並び替え・タップで文字選択", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                       ),
+                       Expanded(
+                         child: DragTarget<CardData>(
+                           onAccept: (card) {
+                             setState(() {
+                               player.hand.remove(card);
+                               player.selectedCards.add(PlacedCard(card: card, selectedSection: 1));
+                             });
+                           },
+                           builder: (context, candidateData, rejectedData) {
+                             if (player.selectedCards.isEmpty) {
+                               return Center(
+                                 child: Text("手札からここにドラッグしてください", 
+                                   style: TextStyle(color: Colors.grey[400], fontSize: 16)),
+                               );
+                             }
+                             
+                             return ReorderableListView.builder(
+                               scrollDirection: Axis.horizontal,
+                               padding: const EdgeInsets.symmetric(horizontal: 10),
+                               itemCount: player.selectedCards.length,
+                               onReorder: (oldIndex, newIndex) {
+                                 setState(() {
+                                   if (oldIndex < newIndex) newIndex -= 1;
+                                   final item = player.selectedCards.removeAt(oldIndex);
+                                   player.selectedCards.insert(newIndex, item);
+                                 });
+                               },
+                               itemBuilder: (context, index) {
+                                 final placedCard = player.selectedCards[index];
+                                 // ★変更点：ここをDragStartListenerで包むことでどこでも掴めるようになる
+                                 return ReorderableDragStartListener(
+                                   key: ValueKey(placedCard),
+                                   index: index,
+                                   child: _buildPlacedCard(
+                                     placedCard: placedCard,
+                                     onTapSection: (sectionIndex) {
+                                       setState(() {
+                                         placedCard.selectedSection = sectionIndex;
+                                       });
+                                     },
+                                     onDelete: () {
+                                       setState(() {
+                                         player.selectedCards.removeAt(index);
+                                         player.hand.add(placedCard.card);
+                                       });
+                                     },
+                                   ),
+                                 );
+                               },
+                             );
+                           },
+                         ),
+                       ),
+                    ],
+                  ),
+                ),
+                
+                const Divider(height: 1, thickness: 2),
+                
+                // --- エリアB: 手札エリア ---
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(10),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.75,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    itemCount: player.hand.length,
+                    itemBuilder: (context, index) {
+                      final card = player.hand[index];
+                      return Draggable<CardData>(
+                        data: card,
+                        feedback: Material(
+                          color: Colors.transparent,
+                          child: Opacity(opacity: 0.7, child: _buildHandCard(card)),
+                        ),
+                        childWhenDragging: Opacity(opacity: 0.3, child: _buildHandCard(card)),
+                        child: _buildHandCard(card),
+                      );
+                    },
+                  ),
+                ),
+
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white, padding: const EdgeInsets.all(15)),
+                        onPressed: player.selectedCards.isEmpty ? null : _nextPlayer,
+                        child: const Text("これで決定！", style: TextStyle(fontSize: 18)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
   }
-}
+
+  Widget _buildHandCard(CardData card) {
+    const textStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87);
+    return Container(
+      width: 100, // サイズ固定
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.3), blurRadius: 3, offset: const Offset(0, 2))],
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Text(card.top, style: textStyle, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Divider(height: 1, color: Colors.grey.shade200),
+          Text(card.middle, style: textStyle, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Divider(height: 1, color: Colors.grey.shade200),
+          Text(card.bottom, style: textStyle, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlacedCard({
+    required PlacedCard placedCard,
+    required Function(int) onTapSection,
+    required VoidCallback onDelete,
+  }) {
+    return Container(
+      width: 110,
+      margin: const EdgeInsets.only(right: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blueAccent, width: 2),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, 2))],
+      ),
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              Expanded(child: InkWell(onTap: () => onTapSection(0), child: _buildSectionText(placedCard.card.top, placedCard.selectedSection == 0))),
+              const Divider(height: 1),
+              Expanded(child: InkWell(onTap: () => onTapSection(1), child: _buildSectionText(placedCard.card.middle, placedCard.selectedSection == 1))),
+              const Divider(height: 1),
+              Expanded(child: InkWell(onTap: () => onTapSection(2), child: _buildSectionText(placedCard.card.bottom, placedCard.selectedSection == 2))),
+            ],
+          ),
+          Positioned(
+            right: 0, top: 0,
+            child: InkWell(
+              onTap: onDelete,
+              child: Container(
+                decoration: const BoxDecoration(color: Colors.red, borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8), topRight: Radius.circular(6))),
+                padding: const EdgeInsets.all(2),
+                child: const Icon(Icons.close, size: 16, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionText(String text, bool isSelected) {
+    return Container(
+      width: double.infinity,
+      color: isSelected ? Colors.yellow[100] : Colors.transparent,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: isSelected ? 18 : 12,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.black : Colors.grey,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
