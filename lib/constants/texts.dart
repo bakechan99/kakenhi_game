@@ -31,5 +31,26 @@ class AppTexts {
   static const String confirmTitle = "確認";
   static const String saveSuccess = "この研究タイトルでよろしいですか？";
   static const String defaultPlayerName = "プレイヤー";
-  static const String setupPlayerNameSection = "③ プレイヤー名（ドラッグで入替）";
+
+  // --- Methods for dynamic texts ---
+  
+  // Setup Screen
+  static String defaultPlayerNameWithIndex(int index) => "$defaultPlayerName$index";
+  static String playerCountUnit(int count) => "$count人";
+  static String secondsUnit(int sec) => "${sec}秒";
+
+  // Game Loop Screen
+  static String nextPlayerMessage(String name) => "次は $name さんの番です";
+  static String areYouReady(String name) => "$nameさん、準備はいいですか？";
+  static String turnTitle(String name) => "$name のターン";
+
+  // Result Screen
+  static String nextPlayerStandby(String name) => "次は $name さん";
+  static String presentationTitle(String name) => "$name の発表";
+  static String presentationTimeMsg(int seconds) => "時間は$seconds秒です。";
+  static String timeLeft(int seconds) => "残り $seconds 秒";
+  static String votingTitle(String name) => "$name の投票";
+  static String confirmVote(String name) => "$name さんに投票しますか？";
+  static String winnerName(String name) => "👑 $name";
+  static String voteCount(int votes) => "獲得票数: $votes 票";
 }

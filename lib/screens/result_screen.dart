@@ -93,7 +93,8 @@ class _ResultScreenState extends State<ResultScreen> {
   void _startPresentation() {
     _showConfirmDialog(
       title: "プレゼンを開始します",
-      content: "時間は${widget.settings.presentationTimeSec}秒です。",
+      // AppTexts.presentationTimeMsg を使用
+      content: AppTexts.presentationTimeMsg(widget.settings.presentationTimeSec),
       onConfirm: () {
         setState(() => currentPhase = ScreenPhase.presentation);
         _startTimer();
@@ -130,7 +131,8 @@ class _ResultScreenState extends State<ResultScreen> {
     String targetName = widget.players[targetIndex].name;
     _showConfirmDialog(
       title: "投票確認",
-      content: "$targetName さんに投票しますか？",
+      // AppTexts.confirmVote(targetName) を使用
+      content: AppTexts.confirmVote(targetName),
       onConfirm: () {
         voteCounts[targetIndex]++;
         if (currentVoterIndex < widget.players.length - 1) {
@@ -183,7 +185,8 @@ class _ResultScreenState extends State<ResultScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("次は ${player.name} さん", style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+                // AppTexts.nextPlayerStandby(player.name) を使用
+                Text(AppTexts.nextPlayerStandby(player.name), style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Text(message, style: const TextStyle(fontSize: 18, color: Colors.white70)),
                 const SizedBox(height: 40),
@@ -211,12 +214,14 @@ class _ResultScreenState extends State<ResultScreen> {
     final isTimeUp = _timeLeft == 0;
 
     return Scaffold(
-      appBar: AppBar(title: Text("${player.name} の発表")),
+      // AppTexts.presentationTitle(player.name) を使用
+      appBar: AppBar(title: Text(AppTexts.presentationTitle(player.name))),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text("残り $_timeLeft 秒", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: isTimeUp ? Colors.red : Colors.black)),
+            // AppTexts.timeLeft(_timeLeft) を使用
+            Text(AppTexts.timeLeft(_timeLeft), style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: isTimeUp ? Colors.red : Colors.black)),
             const SizedBox(height: 20),
             Container(
               width: double.infinity,
@@ -258,7 +263,8 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildVotingScreen() {
     final voter = widget.players[currentVoterIndex];
     return Scaffold(
-      appBar: AppBar(title: Text("${voter.name} の投票")),
+      // AppTexts.votingTitle(voter.name) を使用
+      appBar: AppBar(title: Text(AppTexts.votingTitle(voter.name))),
       body: Column(
         children: [
           const Padding(padding: EdgeInsets.all(16.0), child: Text("最も予算を与えたい研究を選んでください", textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
@@ -298,9 +304,11 @@ class _ResultScreenState extends State<ResultScreen> {
           children: [
             const Text("採択された研究課題は...", style: TextStyle(fontSize: 20)),
             const SizedBox(height: 30),
-            ...winners.map((w) => Text("👑 ${w.name}", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.orange))),
+            // AppTexts.winnerName(w.name) を使用
+            ...winners.map((w) => Text(AppTexts.winnerName(w.name), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.orange))),
             const SizedBox(height: 20),
-            Text("獲得票数: $maxVotes 票", style: const TextStyle(fontSize: 24)),
+            // AppTexts.voteCount(maxVotes) を使用
+            Text(AppTexts.voteCount(maxVotes), style: const TextStyle(fontSize: 24)),
             const SizedBox(height: 50),
             ElevatedButton(
               onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),

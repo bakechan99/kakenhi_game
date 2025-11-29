@@ -93,8 +93,8 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // "次は ${player.name} さんの番です" -> AppTexts を使用して構築
-                Text("${AppTexts.nextPlayer} ${player.name} ${AppTexts.san}${AppTexts.turnMessageSuffix}", 
+                // AppTexts.nextPlayerMessage(player.name) を使用
+                Text(AppTexts.nextPlayerMessage(player.name), 
                   style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 30),
                 const Icon(Icons.phone_android, size: 100, color: Colors.white),
@@ -105,9 +105,9 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
                 ElevatedButton(
                   onPressed: () {
                     _showConfirmDialog(
-                      title: AppTexts.confirmTitle, // "確認" -> AppTexts.confirmTitle
-                      // "${player.name}さん、準備はいいですか？" -> AppTexts を使用して構築
-                      content: "${player.name}${AppTexts.areYouReadySuffix}", 
+                      title: AppTexts.confirmTitle,
+                      // AppTexts.areYouReady(player.name) を使用
+                      content: AppTexts.areYouReady(player.name), 
                       onConfirm: () => setState(() => isPassing = false)
                     );
                   },
@@ -130,8 +130,8 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
   // --- 画面2: メインゲーム画面 ---
   Widget _buildGameScreen(Player player) {
     return Scaffold(
-      // "${player.name} のターン" -> AppTexts を使用して構築
-      appBar: AppBar(title: Text("${player.name}${AppTexts.turnTitleSuffix}")),
+      // AppTexts.turnTitle(player.name) を使用
+      appBar: AppBar(title: Text(AppTexts.turnTitle(player.name))),
       body: Column(
         children: [
           // --- エリアA: 作成されたタイトル（ドラッグ並び替えエリア） ---

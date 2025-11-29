@@ -54,8 +54,8 @@ class _SetupScreenState extends State<SetupScreen> {
   void _updateControllers() {
     setState(() {
       while (_controllers.length < playerCount) {
-        // "プレイヤー" -> AppTexts.defaultPlayerName
-        _controllers.add(TextEditingController(text: "${AppTexts.defaultPlayerName}${_controllers.length + 1}"));
+        // AppTexts.defaultPlayerNameWithIndex を使用
+        _controllers.add(TextEditingController(text: AppTexts.defaultPlayerNameWithIndex(_controllers.length + 1)));
       }
       while (_controllers.length > playerCount) {
         _controllers.removeLast();
@@ -115,7 +115,8 @@ class _SetupScreenState extends State<SetupScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton.filled(onPressed: playerCount > 3 ? () { setState(() { playerCount--; _updateControllers(); }); } : null, icon: const Icon(Icons.remove)),
-                Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Text("$playerCount人", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+                // "$playerCount人" -> AppTexts.playerCountUnit(playerCount)
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Text(AppTexts.playerCountUnit(playerCount), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
                 IconButton.filled(onPressed: playerCount < 8 ? () { setState(() { playerCount++; _updateControllers(); }); } : null, icon: const Icon(Icons.add)),
               ],
             ),
@@ -127,7 +128,8 @@ class _SetupScreenState extends State<SetupScreen> {
               children: [
                 IconButton.outlined(onPressed: () => _changeTime(-10), icon: const Text("-10秒")),
                 const SizedBox(width: 10),
-                Text("${presentationTime}秒", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                // "${presentationTime}秒" -> AppTexts.secondsUnit(presentationTime)
+                Text(AppTexts.secondsUnit(presentationTime), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 10),
                 IconButton.outlined(onPressed: () => _changeTime(10), icon: const Text("+10秒")),
               ],
