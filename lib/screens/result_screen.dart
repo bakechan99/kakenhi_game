@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import '../models/game_settings.dart';
 import '../models/player.dart';
-import '../models/placed_card.dart';
-import '../models/game_settings.dart'; // 設定モデル
-import '../utils/app_texts.dart'; // AppTextsをインポート
+import '../constants/texts.dart'; // インポートが必須です
 
 enum ScreenPhase { presentationStandby, presentation, votingStandby, voting, result }
 
@@ -48,7 +47,7 @@ class _ResultScreenState extends State<ResultScreen> {
           title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
           content: content != null ? Text(content) : null,
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("キャンセル")),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text(AppTexts.cancel)), // "キャンセル" -> AppTexts.cancel
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
@@ -92,8 +91,7 @@ class _ResultScreenState extends State<ResultScreen> {
   // --- 進行管理 ---
   void _startPresentation() {
     _showConfirmDialog(
-      title: "プレゼンを開始します",
-      // AppTexts.presentationTimeMsg を使用
+      title: AppTexts.presentationStartTitle, // "プレゼンを開始します"
       content: AppTexts.presentationTimeMsg(widget.settings.presentationTimeSec),
       onConfirm: () {
         setState(() => currentPhase = ScreenPhase.presentation);
@@ -102,36 +100,14 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  void _finishPresentation() {
-    _showConfirmDialog(
-      title: "発表を終了しますか？",
-      onConfirm: () {
-        _timer?.cancel();
-        _audioPlayer.stop();
-        if (currentPresenterIndex < widget.players.length - 1) {
-          setState(() {
-            currentPresenterIndex++;
-            currentPhase = ScreenPhase.presentationStandby;
-          });
-        } else {
-          setState(() => currentPhase = ScreenPhase.votingStandby);
-        }
-      }
-    );
-  }
-
   void _startVoting() {
-    _showConfirmDialog(
-      title: "投票を開始します",
-      onConfirm: () => setState(() => currentPhase = ScreenPhase.voting)
-    );
+    setState(() => currentPhase = ScreenPhase.voting);
   }
 
   void _submitVote(int targetIndex) {
     String targetName = widget.players[targetIndex].name;
     _showConfirmDialog(
-      title: "投票確認",
-      // AppTexts.confirmVote(targetName) を使用
+      title: AppTexts.voteConfirmTitle, // "投票確認"
       content: AppTexts.confirmVote(targetName),
       onConfirm: () {
         voteCounts[targetIndex]++;
@@ -141,10 +117,28 @@ class _ResultScreenState extends State<ResultScreen> {
             currentPhase = ScreenPhase.votingStandby;
           });
         } else {
-          setState(() => currentPhase = ScreenPhase.result);
+          _calcResult();
         }
       }
     );
+  }
+
+  void _calcResult() {
+    int maxVotes = 0;
+    for (var count in voteCounts) { if (count > maxVotes) maxVotes = count; }
+    List<Player> winners = [];
+    for (int i = 0; i < widget.players.length; i++) { if (voteCounts[i] == maxVotes) winners.add(widget.players[i]); }
+
+    setState(() {
+      currentPhase = ScreenPhase.result;
+      // 結果発表時にサウンド再生
+      _audioPlayer.play(AssetSource('audio/result.mp3'));
+    });
+
+    // 5秒後に自動でタイトル画面に戻る
+    Future.delayed(const Duration(seconds: 5), () {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    });
   }
 
   // --- UI ---
@@ -154,16 +148,16 @@ class _ResultScreenState extends State<ResultScreen> {
       case ScreenPhase.presentationStandby:
         return _buildStandbyScreen(
           player: widget.players[currentPresenterIndex],
-          message: AppTexts.nextPresenter, // "次は発表の番です" -> AppTexts.nextPresenter
-          onReady: _startPresentation, // ダイアログありの関数を呼ぶ
+          message: AppTexts.nextPresenter,
+          onReady: _startPresentation,
         );
       case ScreenPhase.presentation:
         return _buildPresentationScreen();
       case ScreenPhase.votingStandby:
         return _buildStandbyScreen(
           player: widget.players[currentVoterIndex],
-          message: AppTexts.nextVoter, // "次は投票の番です" -> AppTexts.nextVoter
-          onReady: _startVoting, // ダイアログありの関数を呼ぶ
+          message: AppTexts.nextVoter,
+          onReady: _startVoting,
         );
       case ScreenPhase.voting:
         return _buildVotingScreen();
@@ -185,21 +179,15 @@ class _ResultScreenState extends State<ResultScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // AppTexts.nextPlayerStandby(player.name) を使用
+                // const を削除 (メソッド呼び出しのため)
                 Text(AppTexts.nextPlayerStandby(player.name), style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Text(message, style: const TextStyle(fontSize: 18, color: Colors.white70)),
                 const SizedBox(height: 40),
-                const Icon(Icons.phone_android, size: 80, color: Colors.white),
-                const SizedBox(height: 40),
                 ElevatedButton(
                   onPressed: onReady,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text("準備OK", style: TextStyle(fontSize: 20)),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
+                  child: const Text("START", style: TextStyle(fontSize: 20)),
                 ),
               ],
             ),
@@ -214,46 +202,41 @@ class _ResultScreenState extends State<ResultScreen> {
     final isTimeUp = _timeLeft == 0;
 
     return Scaffold(
-      // AppTexts.presentationTitle(player.name) を使用
       appBar: AppBar(title: Text(AppTexts.presentationTitle(player.name))),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // AppTexts.timeLeft(_timeLeft) を使用
             Text(AppTexts.timeLeft(_timeLeft), style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: isTimeUp ? Colors.red : Colors.black)),
             const SizedBox(height: 20),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.blueAccent, width: 4),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
-              ),
-              child: Column(
-                children: [
-                  const Text("【今回の研究課題】", style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    children: player.selectedCards.map((p) => Text(p.selectedText, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))).toList(),
-                  ),
-                ],
-              ),
+              decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.blue)),
+              // 修正箇所 (Line 217付近): メソッド呼び出し
+              child: Text(AppTexts.researchTitle(player.researchTitle), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
             ),
             const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                onPressed: _finishPresentation,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white),
-                child: const Text("発表終了（次の人へ）", style: TextStyle(fontSize: 20)),
+            if (isTimeUp)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (currentPresenterIndex < widget.players.length - 1) {
+                      setState(() {
+                        currentPresenterIndex++;
+                        currentPhase = ScreenPhase.presentationStandby;
+                      });
+                    } else {
+                      setState(() {
+                        currentPhase = ScreenPhase.votingStandby;
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+                  child: const Text(AppTexts.nextPlayerButton), // "次のプレイヤーへ"
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -263,23 +246,26 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildVotingScreen() {
     final voter = widget.players[currentVoterIndex];
     return Scaffold(
-      // AppTexts.votingTitle(voter.name) を使用
       appBar: AppBar(title: Text(AppTexts.votingTitle(voter.name))),
       body: Column(
         children: [
-          const Padding(padding: EdgeInsets.all(16.0), child: Text("最も予算を与えたい研究を選んでください", textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+          const Padding(padding: EdgeInsets.all(16.0), child: Text(AppTexts.voteSelectionTitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
           Expanded(
             child: ListView.builder(
               itemCount: widget.players.length,
               itemBuilder: (context, index) {
-                final candidate = widget.players[index];
-                if (index == currentVoterIndex) return const SizedBox.shrink();
+                final p = widget.players[index];
+                if (p == voter) return const SizedBox.shrink(); // 自分には投票できない
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ListTile(
-                    title: Text(candidate.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(candidate.selectedCards.map((c) => c.selectedText).join(""), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    trailing: ElevatedButton(onPressed: () => _submitVote(index), child: const Text("投票")),
+                    // 修正箇所 (Line 263付近): メソッド呼び出し
+                    title: Text(AppTexts.researchTitle(p.researchTitle), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(p.name),
+                    trailing: ElevatedButton(
+                      onPressed: () => _submitVote(index),
+                      child: const Text("投票"),
+                    ),
                   ),
                 );
               },
