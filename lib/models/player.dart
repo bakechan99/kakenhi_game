@@ -8,4 +8,10 @@ class Player {
   List<PlacedCard> selectedCards = []; 
   
   Player({required this.name});
+  
+  // 研究タイトルを生成するゲッター
+  String get researchTitle {
+    if (selectedCards.isEmpty) return "（未設定）";
+    return selectedCards.map((pc) => pc.selectedText).join("");
+  }
 }
