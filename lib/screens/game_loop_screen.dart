@@ -21,9 +21,10 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
 
   void _nextPlayer() {
     // ポップアップで確認
+    Player player = widget.players[currentPlayerIndex];
     _showConfirmDialog(
       title: AppTexts.confirmTitle, // "確認" -> AppTexts.confirmTitle
-      content: AppTexts.confirmResearchTitle, // "このタイトルで決定してよろしいですか？" -> AppTexts.confirmResearchTitle
+      content: "以下のタイトルで決定しますか？\n\n「${player.researchTitle}」", // 研究タイトルを表示
       onConfirm: () {
         if (currentPlayerIndex < widget.players.length - 1) {
           setState(() {
@@ -166,6 +167,7 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
                        }
                        
                        return ReorderableListView.builder(
+                         buildDefaultDragHandles: false, // ドラッグハンドルを無効化
                          scrollDirection: Axis.horizontal,
                          padding: const EdgeInsets.symmetric(horizontal: 10),
                          itemCount: player.selectedCards.length,
@@ -178,23 +180,46 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
                          },
                          itemBuilder: (context, index) {
                            final placedCard = player.selectedCards[index];
-                           // ★変更点：ここをDragStartListenerで包むことでどこでも掴めるようになる
+                           // ReorderableDragStartListener でラップして並び替え可能にする
                            return ReorderableDragStartListener(
                              key: ValueKey(placedCard),
                              index: index,
-                             child: _buildPlacedCard(
-                               placedCard: placedCard,
-                               onTapSection: (sectionIndex) {
-                                 setState(() {
-                                   placedCard.selectedSection = sectionIndex;
-                                 });
-                               },
-                               onDelete: () {
-                                 setState(() {
-                                   player.selectedCards.removeAt(index);
-                                   player.hand.add(placedCard.card);
-                                 });
-                               },
+                             child: Draggable<PlacedCard>(
+                               data: placedCard,
+                               affinity: Axis.vertical, // 縦方向のドラッグのみDraggable（手札戻し）として反応
+                               feedback: Material(
+                                 color: Colors.transparent,
+                                 child: Opacity(
+                                   opacity: 0.7,
+                                   child: _buildPlacedCard(
+                                     placedCard: placedCard,
+                                     onTapSection: (_) {},
+                                     onDelete: () {},
+                                   ),
+                                 ),
+                               ),
+                               childWhenDragging: Opacity(
+                                 opacity: 0.3,
+                                 child: _buildPlacedCard(
+                                   placedCard: placedCard,
+                                   onTapSection: (_) {},
+                                   onDelete: () {},
+                                 ),
+                               ),
+                               child: _buildPlacedCard(
+                                 placedCard: placedCard,
+                                 onTapSection: (sectionIndex) {
+                                   setState(() {
+                                     placedCard.selectedSection = sectionIndex;
+                                   });
+                                 },
+                                 onDelete: () {
+                                   setState(() {
+                                     player.selectedCards.removeAt(index);
+                                     player.hand.add(placedCard.card);
+                                   });
+                                 },
+                               ),
                              ),
                            );
                          },
@@ -210,25 +235,35 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
           
           // --- エリアB: 手札エリア ---
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(10),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: player.hand.length,
-              itemBuilder: (context, index) {
-                final card = player.hand[index];
-                return Draggable<CardData>(
-                  data: card,
-                  feedback: Material(
-                    color: Colors.transparent,
-                    child: Opacity(opacity: 0.7, child: _buildHandCard(card)),
+            child: DragTarget<PlacedCard>(
+              onAccept: (placedCard) {
+                setState(() {
+                  player.selectedCards.remove(placedCard);
+                  player.hand.add(placedCard.card);
+                });
+              },
+              builder: (context, candidateData, rejectedData) {
+                return GridView.builder(
+                  padding: const EdgeInsets.all(10),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
                   ),
-                  childWhenDragging: Opacity(opacity: 0.3, child: _buildHandCard(card)),
-                  child: _buildHandCard(card),
+                  itemCount: player.hand.length,
+                  itemBuilder: (context, index) {
+                    final card = player.hand[index];
+                    return Draggable<CardData>(
+                      data: card,
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: Opacity(opacity: 0.7, child: _buildHandCard(card)),
+                      ),
+                      childWhenDragging: Opacity(opacity: 0.3, child: _buildHandCard(card)),
+                      child: _buildHandCard(card),
+                    );
+                  },
                 );
               },
             ),
