@@ -105,12 +105,12 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("ゲーム設定")),
+      appBar: AppBar(title: const Text(AppTexts.setupTitle)),
       body: SingleChildScrollView( // 画面からはみ出ないようにスクロール可能に
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildSectionTitle("① 参加人数"),
+            _buildSectionTitle(AppTexts.playerCountSection),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -122,7 +122,7 @@ class _SetupScreenState extends State<SetupScreen> {
             ),
             const SizedBox(height: 20),
             
-            _buildSectionTitle("② プレゼン時間"),
+            _buildSectionTitle(AppTexts.presentationTimeSection),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
