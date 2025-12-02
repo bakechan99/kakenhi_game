@@ -11,7 +11,7 @@ class KakenhiGameApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '科研費ゲーム',
+      title: 'カケンヒゲーム',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
