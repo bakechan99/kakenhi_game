@@ -25,7 +25,7 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
     Player player = widget.players[currentPlayerIndex];
     _showConfirmDialog(
       title: AppTexts.confirmTitle,
-      content: "以下のタイトルで決定しますか？\n\n「${player.researchTitle}」", // 研究タイトルを表示
+      content: "${AppTexts.confirmResearchTitle}\n\n「${player.researchTitle}」", // 研究タイトルを表示
       onConfirm: () {
         if (currentPlayerIndex < widget.players.length - 1) {
           setState(() {
