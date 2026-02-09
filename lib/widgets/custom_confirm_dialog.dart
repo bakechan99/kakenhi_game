@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/texts.dart';
 
 class CustomConfirmDialog extends StatelessWidget {
   final String title;
@@ -13,8 +14,8 @@ class CustomConfirmDialog extends StatelessWidget {
     required this.title,
     required this.content,
     required this.onConfirm,
-    this.confirmText = "OK",
-    this.cancelText = "キャンセル",
+    this.confirmText = AppTexts.ok,
+    this.cancelText = AppTexts.cancel,
     this.icon = Icons.info_outline,
   });
 

@@ -73,7 +73,7 @@ class _ResultScreenState extends State<ResultScreen> {
         content: content ?? "",
         onConfirm: onConfirm,
         cancelText: AppTexts.cancel, // "キャンセル" -> AppTexts.cancel
-        confirmText: "OK", // 確認ボタンのテキスト
+        confirmText: AppTexts.ok, // 確認ボタンのテキスト
       ),
     );
   }
@@ -488,7 +488,7 @@ class _ResultScreenState extends State<ResultScreen> {
             width: double.infinity,
             child: Column(
               children: [
-                const Text("最も予算を与えたい研究に配分してください", style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(AppTexts.voteSelectionTitle, style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Text(
                   "残り予算: $remainingBudget 万円 / 100 万円",

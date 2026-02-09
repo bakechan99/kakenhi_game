@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/texts.dart';
 
 class TitleButton extends StatefulWidget {
   final VoidCallback onPressed;
@@ -7,7 +8,7 @@ class TitleButton extends StatefulWidget {
   const TitleButton({
     Key? key,
     required this.onPressed,
-    this.label = '研究を始める',
+    this.label = AppTexts.startGameButton,
   }) : super(key: key);
 
   @override
