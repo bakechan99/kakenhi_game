@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/title_screen.dart'; // 設定画面を呼び出す
+import 'constants/texts.dart';
 
 void main() {
   runApp(const KakenhiGameApp());
@@ -11,7 +12,7 @@ class KakenhiGameApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'カケンヒゲーム',
+      title: AppTexts.appTitle,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,

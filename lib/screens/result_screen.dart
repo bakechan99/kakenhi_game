@@ -77,8 +77,8 @@ class _ResultScreenState extends State<ResultScreen> {
 
   void _onHomePressed() {
     _showConfirmDialog(
-      title: "確認",
-      content: "タイトル画面に戻りますか？\n現在のデータは失われます。",
+      title: AppTexts.checkPop,
+      content: AppTexts.cautionBackHome,
       onConfirm: () => Navigator.of(context).popUntil((route) => route.isFirst),
     );
   }
@@ -197,7 +197,7 @@ class _ResultScreenState extends State<ResultScreen> {
     // 現在の配分を確定させる
     _showConfirmDialog(
       title: AppTexts.voteConfirmTitle, // "投票の確認"
-      content: "この配分で投票しますか？",
+      content: AppTexts.checkBudget,
       onConfirm: () {
         // マトリクスに保存
         currentAllocation.forEach((targetIndex, amount) {
@@ -274,7 +274,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 ElevatedButton(
                   onPressed: onReady,
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
-                  child: const Text("START", style: TextStyle(fontSize: 20)),
+                  child: const Text(AppTexts.startVoteButton, style: TextStyle(fontSize: 20)),
                 ),
               ],
             ),
@@ -319,7 +319,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   // 左: 発表時間
                   Column(
                     children: [
-                      Text("発表時間", style: _isPresentationMode ? activeLabelStyle : inactiveLabelStyle),
+                      Text(AppTexts.presentationTimeLabel, style: _isPresentationMode ? activeLabelStyle : inactiveLabelStyle),
                       Text(
                         AppTexts.secondsUnit(_timeLeft),
                         style: _isPresentationMode ? activeTextStyle : inactiveTextStyle,
@@ -344,7 +344,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   // 右: 質疑応答時間
                   Column(
                     children: [
-                      Text("質疑応答", style: !_isPresentationMode ? activeLabelStyle : inactiveLabelStyle),
+                      Text(AppTexts.feedbackTitle, style: !_isPresentationMode ? activeLabelStyle : inactiveLabelStyle),
                       Text(
                         AppTexts.secondsUnit(_qaTimeLeft),
                         style: !_isPresentationMode ? activeTextStyle : inactiveTextStyle,
@@ -368,7 +368,7 @@ class _ResultScreenState extends State<ResultScreen> {
             const SizedBox(height: 40),
             
             // 2. ラベル
-            const Text("【研究課題】", style: TextStyle(fontSize: 20, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+            const Text(AppTexts.madeTitleHeader, style: TextStyle(fontSize: 20, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             
             // 3. 研究課題タイトル (中央大きく)
@@ -399,7 +399,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
                 child: Text(
-                  _isPresentationMode ? "質疑応答へ進む" : "終了して次の人へ",
+                  _isPresentationMode ? AppTexts.goFeedback : AppTexts.goNextPlayer,
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -450,7 +450,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 const Text(AppTexts.voteSelectionTitle, style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Text(
-                  "残り予算: $remainingBudget 万円 / 100 万円",
+                  AppTexts.remainBudget(remainingBudget),
                   style: TextStyle(
                     fontSize: 24, 
                     fontWeight: FontWeight.bold,
@@ -551,7 +551,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 15)
                   ),
                   onPressed: isComplete ? _submitVote : null,
-                  child: const Text("投票を確定する", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: const Text(AppTexts.decideBudget, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
             ),

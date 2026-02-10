@@ -120,8 +120,8 @@ class _SetupScreenState extends State<SetupScreen> {
     showDialog(
       context: context,
       builder: (context) => CustomConfirmDialog(
-        title: "確認",
-        content: "タイトル画面に戻りますか？\n現在のデータは失われます。",
+        title: AppTexts.checkPop,
+        content: AppTexts.cautionBackHome,
         onConfirm: () {
           Navigator.of(context).popUntil((route) => route.isFirst);
         },
@@ -158,12 +158,12 @@ class _SetupScreenState extends State<SetupScreen> {
             const SizedBox(height: 20),
             
             // 時間設定セクション（統合）
-            _buildSectionTitle("② 時間設定"),
+            _buildSectionTitle(AppTexts.presentationTimeSection),
             const SizedBox(height: 10),
             
             // プレゼン時間設定
             _buildTimeSlider(
-              label: "プレゼン時間",
+              label: AppTexts.presentationTimeLabel,
               value: presentationTime,
               onChanged: (val) {
                 setState(() {
@@ -177,7 +177,7 @@ class _SetupScreenState extends State<SetupScreen> {
 
             // 質疑応答時間設定
             _buildTimeSlider(
-              label: "質疑応答時間",
+              label: AppTexts.presentationFeedbackLabel,
               value: qaTime,
               onChanged: (val) {
                 setState(() {
