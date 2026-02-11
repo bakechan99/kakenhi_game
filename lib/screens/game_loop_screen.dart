@@ -96,7 +96,7 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text(AppTexts.readyButton, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  child: const Text(AppTexts.startTurnButton, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 )
               ],
             ),
@@ -116,8 +116,8 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
           icon: const Icon(Icons.home),
           onPressed: () {
             _showConfirmDialog(
-              title: "確認",
-              content: "タイトル画面に戻りますか？\n現在のデータは失われます。",
+              title: AppTexts.checkPop,
+              content: AppTexts.cautionBackHome,
               onConfirm: () => Navigator.of(context).popUntil((route) => route.isFirst),
             );
           },
@@ -218,7 +218,7 @@ class _GameLoopScreenState extends State<GameLoopScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text("手札", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 16)),
+                            const Text(AppTexts.hands, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 16)),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,

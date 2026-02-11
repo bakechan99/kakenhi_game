@@ -6,6 +6,8 @@ class AppTexts {
   static const String cancel = "キャンセル";
   static const String ok = "OK";
   static const String san = "さん";
+  static const String checkPop = "確認";
+  static const String cautionBackHome = "タイトル画面に戻りますか？\n\n現在のデータは失われます。";
 
   // Title Screen
   static const String gameTitle = "カケンヒゲーム";
@@ -15,7 +17,9 @@ class AppTexts {
   // Setup Screen
   static const String setupTitle = "設定";
   static const String playerCountSection = "① プレイヤー数";
-  static const String presentationTimeSection = "② プレゼン時間";
+  static const String presentationTimeSection = "② 時間設定";
+  static const String presentationTimeLabel = "プレゼン時間";
+  static const String presentationFeedbackLabel = "質疑応答時間";
   static const String setupPlayerNameSection = "③ プレイヤー名（ドラッグで入替）";
   static const String defaultPlayerName = "プレイヤー";
 
@@ -26,11 +30,12 @@ class AppTexts {
   static const String nextPlayerButton = "次のプレイヤーへ";
   static const String turnMessageSuffix = "の番です";
   static const String passSmartphoneMessage = "スマホを渡してください";
-  static const String readyButton = "OK";
+  static const String startTurnButton = "OK";
   static const String areYouReadySuffix = "さんで間違いありませんか？";
   static const String turnTitleSuffix = " のターン";
   static const String researchAreaHeader = "【研究タイトル】 ドラッグで並び替え  タップで文字選択";
   static const String decideButton = "決定";
+  static const String hands = "手札";
   
   // Presentation Screen
 
@@ -44,6 +49,13 @@ class AppTexts {
   static const String voteConfirmTitle = "投票確認";
   static const String voteSelectionTitle = "最も予算を与えたい研究を選んでください";
   static const String resultHeader = "採択された研究課題は...";
+  static const String checkBudget = "この配分で投票しますか？";
+  static const String startVoteButton = "START";
+  static const String decideBudget = "投票を確定する";
+  static const String feedbackTitle = "質疑応答";
+  static const String goFeedback = "質疑応答へ進む";
+  static const String goNextPlayer = "終了して次の人へ";
+  static const String madeTitleHeader = "【研究課題】";
 
   // Pop-up messages 
   static const String confirmTitle = "本人確認";
@@ -69,6 +81,7 @@ class AppTexts {
   static String confirmVote(String name) => "$name さんに投票しますか？";
   static String winnerName(String name) => "👑 $name";
   static String voteCount(int votes) => "獲得票数: $votes 票";
+  static String remainBudget(int remainingBudget) => "残り予算: $remainingBudget 万円 / 100 万円";
   
   // 研究タイトルを整形して返す
   static String researchTitle(String title) => "【研究課題】$title";
